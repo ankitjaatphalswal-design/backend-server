@@ -1,18 +1,18 @@
 {
-  "name": "backend-server",
+  "name": "telegram-story-proxy-server",
   "version": "1.0.0",
-  "description": "Backend server for Telegram story feature proxy",
+  "description": "Backend proxy server for Telegram story feature - routes story API calls through custom server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["express", "backend", "railway", "telegram", "proxy"],
+  "keywords": ["telegram", "proxy", "story", "backend", "railway", "api"],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "axios": "^1.6.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
