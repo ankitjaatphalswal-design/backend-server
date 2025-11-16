@@ -1,130 +1,175 @@
 # Telegram Story Proxy Server
 
-This backend server acts as a proxy/relay for Telegram's story feature when modifying the Telegram source code.
+Backend server that intercepts and proxies Telegram Story API calls through your own server instead of directly to Telegram's servers.
 
-## 🚀 Features
+## 🎯 Purpose
 
-- **Story Upload/Create**: Handle story creation requests from your modified Telegram client
-- **Story Viewing**: Track and record story views
-- **Story Management**: List, delete, and manage stories
-- **Reactions**: Handle story reactions
-- **Privacy Controls**: Support for different privacy settings
+This server acts as a middleware/proxy for modified Telegram clients to route story-related API calls through your infrastructure, allowing you to:
+- Monitor story API traffic
+- Add custom logic before/after story operations
+- Cache story data
+- Implement custom analytics
+- Add additional security layers
+
+## 🚀 Setup
+
+### 1. Deploy to Railway
+
+1. Push this repository to GitHub
+2. Go to [Railway.app](https://railway.app/)
+3. Click "New Project" → "Deploy from GitHub repo"
+4. Select this repository
+5. Railway will auto-detect and deploy
+
+### 2. Configure Your Modified Telegram Client
+
+In your modified Telegram source code, replace the API base URL:
+
+```javascript
+// Before (default Telegram API)
+const API_BASE = 'https://api.telegram.org';
+
+// After (your proxy server)
+const API_BASE = 'https://your-railway-app.up.railway.app/api/telegram';
+```
+
+Or for story-specific endpoints:
+```javascript
+const STORY_API_BASE = 'https://your-railway-app.up.railway.app/api/story';
+```
+
+### 3. Environment Variables (Optional)
+
+Set in Railway dashboard:
+- `TELEGRAM_API_BASE`: Original Telegram API URL (default: https://api.telegram.org)
+- `PORT`: Server port (Railway sets this automatically)
 
 ## 📡 API Endpoints
 
-### Story Operations
-
-#### Upload Story
-```bash
-POST /api/story/upload
-Content-Type: application/json
-
-{
-  "userId": "user_123",
-  "media": "base64_or_url",
-  "caption": "My story!",
-  "privacy": "contacts",
-  "duration": 24
-}
+### Health Check
+```
+GET /
+GET /health
 ```
 
-#### View Story
-```bash
-POST /api/story/view
-Content-Type: application/json
+### Generic Telegram Proxy
+```
+ALL /api/telegram/*
+```
+Forwards any request to Telegram API while logging and allowing custom processing.
 
-{
-  "storyId": "story_123",
-  "viewerId": "user_456"
-}
+### Story-Specific Endpoints
+
+**Send Story**
+```
+POST /api/story/send
 ```
 
-#### Get User Stories
-```bash
-GET /api/story/list/:userId?limit=20&offset=0
+**Get Stories**
+```
+GET /api/story/list
 ```
 
-#### Delete Story
-```bash
-DELETE /api/story/:storyId
-Content-Type: application/json
-
-{
-  "userId": "user_123"
-}
+**Delete Story**
+```
+DELETE /api/story/:id
 ```
 
-#### React to Story
-```bash
-POST /api/story/react
-Content-Type: application/json
+## 🔧 Modifying Telegram Client
 
-{
-  "storyId": "story_123",
-  "userId": "user_456",
-  "reaction": "❤️"
-}
+### Android (Telegram-FOSS / Official)
+
+Edit `TL_stories.java` or story networking files:
+
+```java
+// Original
+String apiUrl = "https://api.telegram.org";
+
+// Modified
+String apiUrl = "https://your-railway-app.up.railway.app/api/telegram";
 ```
 
-#### Get Story Details
-```bash
-GET /api/story/:storyId
+### iOS
+
+Edit `Api.swift` or networking configuration:
+
+```swift
+// Original
+let baseURL = "https://api.telegram.org"
+
+// Modified  
+let baseURL = "https://your-railway-app.up.railway.app/api/telegram"
 ```
 
-#### Get Story Viewers
-```bash
-GET /api/story/:storyId/viewers?limit=50&offset=0
+### Desktop (TDesktop)
+
+Edit `config.h` or API configuration:
+
+```cpp
+// Original
+constexpr auto kApiBase = "https://api.telegram.org";
+
+// Modified
+constexpr auto kApiBase = "https://your-railway-app.up.railway.app/api/telegram";
 ```
 
-## 🔧 Integration with Telegram Source Code
+### Web (Telegram Web)
 
-To integrate with your modified Telegram client:
+Edit API configuration file:
 
-1. **Locate Story API Calls**: Find the story-related API calls in Telegram's source code (usually in `TDLib` or the networking layer)
+```javascript
+// config.js or api.js
+export const API_BASE = 'https://your-railway-app.up.railway.app/api/telegram';
+```
 
-2. **Redirect Endpoints**: Change the API endpoints to point to your server:
-   - Original: `https://api.telegram.org/...`
-   - New: `https://your-server.railway.app/api/story/...`
+## 📝 Logs
 
-3. **Update Request Format**: Ensure your modified client sends requests in the format expected by this server
+The server logs all proxied requests for debugging:
+```
+[2025-11-16T08:30:00.000Z] POST /api/story/send
+[PROXY] POST /stories.sendStory
+[HEADERS] {...}
+[BODY] {...}
+[RESPONSE] Status: 200
+```
 
-4. **Handle Responses**: Update response parsing to match the JSON structure returned by this server
+## 🛡️ Security Notes
 
-## 🛠️ Local Development
+- This server forwards all headers including authentication tokens
+- Add authentication middleware if you want to restrict access
+- Consider adding rate limiting for production use
+- Use HTTPS in production (Railway provides this automatically)
+
+## 🔄 How It Works
+
+1. Modified Telegram client makes story API call to your server
+2. Your server receives the request and logs it
+3. Server forwards request to official Telegram API
+4. Telegram responds to your server
+5. Your server processes response (optional custom logic)
+6. Server forwards response back to client
+
+## 📦 Dependencies
+
+- Express.js: Web server framework
+- Axios: HTTP client for proxying requests
+- Node.js 18+
+
+## 🚀 Local Development
 
 ```bash
+# Install dependencies
 npm install
+
+# Run development server
 npm run dev
+
+# Run production server
+npm start
 ```
 
-Server will run on `http://localhost:3000`
+Server will run on http://localhost:3000
 
-## 🌐 Production Deployment (Railway)
+## 📄 License
 
-1. Push this code to GitHub
-2. Deploy on Railway
-3. Copy the generated URL
-4. Update your Telegram source code to use this URL
-
-## 📝 Next Steps
-
-1. **Add Database**: Integrate PostgreSQL/MongoDB to store stories
-2. **Add Storage**: Use AWS S3/Cloudinary for media files
-3. **Add Authentication**: Implement JWT or API key authentication
-4. **Add Encryption**: Encrypt story data for privacy
-5. **Add Caching**: Use Redis for better performance
-
-## 🔒 Security Considerations
-
-- Implement rate limiting
-- Add authentication/authorization
-- Validate all inputs
-- Encrypt sensitive data
-- Use HTTPS in production
-- Implement CORS properly
-
-## 𓓚 Resources
-
-- [Telegram API Documentation](https://core.telegram.org/api)
-- [TDLib Documentation](https://core.telegram.org/tdlib)
-- [Express.js Documentation](https://expressjs.com/)
+MIT
