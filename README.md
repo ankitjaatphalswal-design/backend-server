@@ -1,129 +1,130 @@
-# Telegram Bot Backend Server
+# Telegram Story Proxy Server
 
-This is a Node.js Express server that handles Telegram bot webhooks, specifically designed to work with Telegram's story features.
+This backend server acts as a proxy/relay for Telegram's story feature when modifying the Telegram source code.
 
-## Features
+## 🚀 Features
 
-- ✅ Telegram webhook integration
-- ✅ Story updates handling
-- ✅ Message processing
-- ✅ Callback query support
-- ✅ Railway deployment ready
+- **Story Upload/Create**: Handle story creation requests from your modified Telegram client
+- **Story Viewing**: Track and record story views
+- **Story Management**: List, delete, and manage stories
+- **Reactions**: Handle story reactions
+- **Privacy Controls**: Support for different privacy settings
 
-## Setup Instructions
+## 📡 API Endpoints
 
-### 1. Get Your Telegram Bot Token
+### Story Operations
 
-1. Open Telegram and search for [@BotFather](https://t.me/botfather)
-2. Send `/newbot` command
-3. Follow the instructions to create your bot
-4. Copy the bot token provided by BotFather
-
-### 2. Deploy to Railway
-
-1. Push this repository to GitHub
-2. Go to [Railway.app](https://railway.app/)
-3. Create a new project from this GitHub repo
-4. Add environment variable: `TELEGRAM_BOT_TOKEN` = your bot token
-5. Railway will provide you a deployment URL (e.g., `https://your-app.railway.app`)
-
-### 3. Set Webhook
-
-After Railway deployment, set your webhook URL:
-
-**Option A: Using the API endpoint**
+#### Upload Story
 ```bash
-curl -X POST https://your-app.railway.app/set-webhook \
-  -H "Content-Type: application/json" \
-  -d '{"webhookUrl": "https://your-app.railway.app/webhook"}'
+POST /api/story/upload
+Content-Type: application/json
+
+{
+  "userId": "user_123",
+  "media": "base64_or_url",
+  "caption": "My story!",
+  "privacy": "contacts",
+  "duration": 24
+}
 ```
 
-**Option B: Using Telegram Bot API directly**
+#### View Story
 ```bash
-curl -X POST https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://your-app.railway.app/webhook", "allowed_updates": ["message", "story", "edited_message"]}'
+POST /api/story/view
+Content-Type: application/json
+
+{
+  "storyId": "story_123",
+  "viewerId": "user_456"
+}
 ```
 
-### 4. Verify Webhook
-
-Check if webhook is set correctly:
+#### Get User Stories
 ```bash
-curl https://your-app.railway.app/webhook-info
+GET /api/story/list/:userId?limit=20&offset=0
 ```
 
-## API Endpoints
+#### Delete Story
+```bash
+DELETE /api/story/:storyId
+Content-Type: application/json
 
-- `GET /` - Server info and available endpoints
-- `GET /health` - Health check endpoint
-- `POST /webhook` - Telegram webhook receiver (for Telegram only)
-- `POST /set-webhook` - Set webhook URL
-- `GET /webhook-info` - Get current webhook information
+{
+  "userId": "user_123"
+}
+```
 
-## Story Feature Integration
+#### React to Story
+```bash
+POST /api/story/react
+Content-Type: application/json
 
-The server is configured to receive Telegram story updates. When a story is posted:
+{
+  "storyId": "story_123",
+  "userId": "user_456",
+  "reaction": "❤️"
+}
+```
 
-1. Telegram sends an update to `/webhook`
-2. The `handleStory()` function processes the story
-3. You can add custom logic to:
-   - Save story data
-   - Process media
-   - Notify other users
-   - Store analytics
-   - Trigger other actions
+#### Get Story Details
+```bash
+GET /api/story/:storyId
+```
 
-## Environment Variables
+#### Get Story Viewers
+```bash
+GET /api/story/:storyId/viewers?limit=50&offset=0
+```
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `TELEGRAM_BOT_TOKEN` | Your Telegram bot token from BotFather | Yes |
-| `PORT` | Server port (Railway sets this automatically) | No (default: 3000) |
+## 🔧 Integration with Telegram Source Code
 
-## Development
+To integrate with your modified Telegram client:
+
+1. **Locate Story API Calls**: Find the story-related API calls in Telegram's source code (usually in `TDLib` or the networking layer)
+
+2. **Redirect Endpoints**: Change the API endpoints to point to your server:
+   - Original: `https://api.telegram.org/...`
+   - New: `https://your-server.railway.app/api/story/...`
+
+3. **Update Request Format**: Ensure your modified client sends requests in the format expected by this server
+
+4. **Handle Responses**: Update response parsing to match the JSON structure returned by this server
+
+## 🛠️ Local Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Run in development mode
 npm run dev
-
-# Run in production
-npm start
 ```
 
-## Telegram Story Updates
+Server will run on `http://localhost:3000`
 
-To receive story updates, make sure:
-1. Your bot has access to stories (check bot permissions)
-2. The webhook includes `story` in `allowed_updates`
-3. Users have added your bot to their story audience
+## 🌐 Production Deployment (Railway)
 
-## Troubleshooting
+1. Push this code to GitHub
+2. Deploy on Railway
+3. Copy the generated URL
+4. Update your Telegram source code to use this URL
 
-**Webhook not receiving updates?**
-- Check Railway logs for errors
-- Verify webhook is set: visit `/webhook-info`
-- Ensure TELEGRAM_BOT_TOKEN is correctly set in Railway
-- Railway URL must be HTTPS (Railway provides this by default)
+## 📝 Next Steps
 
-**Bot not responding?**
-- Check Railway environment variables
-- View Railway deployment logs
-- Test with `/health` endpoint
+1. **Add Database**: Integrate PostgreSQL/MongoDB to store stories
+2. **Add Storage**: Use AWS S3/Cloudinary for media files
+3. **Add Authentication**: Implement JWT or API key authentication
+4. **Add Encryption**: Encrypt story data for privacy
+5. **Add Caching**: Use Redis for better performance
 
-## Next Steps
+## 🔒 Security Considerations
 
-1. Customize `handleStory()` function for your use case
-2. Add database integration (MongoDB, PostgreSQL, etc.)
-3. Implement story analytics
-4. Add user management
-5. Create story interaction features
+- Implement rate limiting
+- Add authentication/authorization
+- Validate all inputs
+- Encrypt sensitive data
+- Use HTTPS in production
+- Implement CORS properly
 
-## Learn More
+## 𓓚 Resources
 
-- [Telegram Bot API](https://core.telegram.org/bots/api)
-- [Telegram Stories](https://telegram.org/blog/stories)
-- [Railway Docs](https://docs.railway.app/)
-- [Express.js Docs](https://expressjs.com/)
+- [Telegram API Documentation](https://core.telegram.org/api)
+- [TDLib Documentation](https://core.telegram.org/tdlib)
+- [Express.js Documentation](https://expressjs.com/)
